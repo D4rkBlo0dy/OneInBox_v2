@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple, Any
 app = Flask(__name__)
 
 # =========================
-# CONFIG (edit here)
+# CONFIG 
 # =========================
 PLATFORMS = ["whatsapp", "instagram", "facebook"]
 AUTO_USER = "Atención"
@@ -84,7 +84,7 @@ def init_db_if_needed() -> None:
         finally:
             conn.close()
 
-    # Always ensure optional demo tables exist (idempotent)
+    # Ensure optional demo tables exist (idempotent)
     ensure_products()
 
 
@@ -228,7 +228,7 @@ def insert_message(thread_id: int, platform: str, role: str, user: str, text: st
     }
 
 # =========================
-# Rule engine (same spirit as your current prototype)
+# Rule engine
 # =========================
 
 KW = {
