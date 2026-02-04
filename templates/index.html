@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>One Inbox</title>
+<style>
+:root{--bg:#0b0f16;--p:rgba(16,24,39,.72);--line:rgba(255,255,255,.08);--txt:#e8eefc;--mut:rgba(232,238,252,.60);--acc:#00d4ff;--r:14px}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;overflow:hidden;font-family:system-ui,Segoe UI,Roboto,Arial;color:var(--txt);background:linear-gradient(180deg,#070a10,var(--bg))}
+.app{height:100vh;width:100vw;display:grid;grid-template-columns:240px 1fr 360px;gap:14px;padding:14px}
+.panel{background:var(--p);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;min-width:0}
+.side{padding:12px;display:flex;flex-direction:column;gap:10px}
+.logoWrap{padding:8px 8px 4px;display:flex;align-items:center}
+.logo{width:160px;height:auto;display:none}
+.logoFallback{width:160px;height:42px;border-radius:12px;border:1px solid rgba(0,212,255,.18);display:flex;align-items:center;gap:10px;padding:0 12px;background:rgba(0,212,255,.06)}
+.dot{width:10px;height:10px;border-radius:50%;background:rgba(0,212,255,.9)}
+.nav{display:flex;flex-direction:column;gap:8px;padding:6px}
+.navBtn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--txt);cursor:pointer;font-weight:650}
+.navBtn:hover{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.10)}
+.navBtn.active{border-color:rgba(0,212,255,.28);background:rgba(0,212,255,.06)}
+.pdot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18)}
+.pdot.wa{background:rgba(37,211,102,.85)}.pdot.ig{background:rgba(193,53,132,.85)}.pdot.fb{background:rgba(24,119,242,.85)}
+.mix{margin:6px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.02);padding:10px}
+.mixT{font-size:12px;font-weight:850;margin:0 0 8px}.hint{font-size:11px;color:var(--mut)}
+.row{display:flex;align-items:center;gap:8px;margin:8px 0}
+.name{width:70px;font-size:12px;color:var(--mut)}
+.bar{flex:1;height:8px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);overflow:hidden}
+.fill{height:100%;width:0%}.fill.wa{background:rgba(37,211,102,.55)}.fill.ig{background:rgba(193,53,132,.55)}.fill.fb{background:rgba(24,119,242,.55)}
+.pct{width:44px;text-align:right;font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+.main{display:flex;flex-direction:column;min-width:0}
+.actions{padding:12px 14px;display:flex;gap:10px;align-items:center;border-bottom:1px solid rgba(255,255,255,.06)}
+.btn{padding:9px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:var(--txt);cursor:pointer;font-weight:800;white-space:nowrap}
+.btn:hover{border-color:rgba(0,212,255,.25);background:rgba(255,255,255,.05)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.primary{border-color:rgba(0,212,255,.28);background:rgba(0,212,255,.08)}
+.msgs{flex:1;min-height:0;display:flex;flex-direction:column;padding:14px}
+.feedWrap{flex:1;min-height:0;display:flex;flex-direction:column;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);overflow:hidden}
+.placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:var(--mut);text-align:center;padding:22px}
+.box{max-width:520px;border:1px dashed rgba(0,212,255,.18);border-radius:12px;padding:16px;background:rgba(0,0,0,.10)}
+.feed{flex:1;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.empty{padding:12px 14px;color:var(--mut);border-top:1px solid rgba(255,255,255,.06)}
+.m{max-width:78%;display:flex;flex-direction:column;gap:6px}
+.m.in{align-self:flex-start}.m.out{align-self:flex-end}
+.meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);flex-wrap:wrap}
+.badge{padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);font-weight:800}
+.chip{padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.02);display:inline-flex;align-items:center;gap:6px;font-weight:800}
+.chip i{width:8px;height:8px;border-radius:50%}.chip.wa i{background:rgba(37,211,102,.85)}.chip.ig i{background:rgba(193,53,132,.85)}.chip.fb i{background:rgba(24,119,242,.85)}
+.time{margin-left:auto;font-variant-numeric:tabular-nums;opacity:.7}
+.bubble{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);line-height:1.35}
+.m.out .bubble{border-color:rgba(0,212,255,.18);background:rgba(0,212,255,.06)}
+.bubble.typing{opacity:.7}.dots{letter-spacing:2px;font-weight:900}
+.right .sim{height:100%;min-height:0;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.sim h3{margin:0;font-size:14px}.sim p{margin:0;color:var(--mut);font-size:12px;line-height:1.35}
+.form{display:flex;flex-direction:column;gap:10px}
+label{font-size:12px;color:var(--mut);font-weight:800}
+input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.18);color:var(--txt);outline:none}
+textarea{min-height:90px;max-height:140px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:rgba(0,212,255,.28);box-shadow:0 0 0 3px rgba(0,212,255,.10)}
+.thread{border-top:1px solid rgba(255,255,255,.06);padding-top:10px;display:flex;flex-direction:column;gap:10px;height:260px}
+.thTop{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.thTitle{font-size:12px;font-weight:900;color:rgba(232,238,252,.85)}
+.thMeta{font-size:11px;color:var(--mut);white-space:nowrap}
+.thList{flex:1;min-height:0;overflow:auto;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:10px}
+.thEmpty{border:1px dashed rgba(0,212,255,.18);border-radius:12px;background:rgba(0,0,0,.10);color:var(--mut);padding:12px;font-size:12px;text-align:center}
+.t{max-width:92%;display:flex;flex-direction:column;gap:4px}.t.user{align-self:flex-start}.t.system{align-self:flex-end}
+.tmeta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mut)}
+.tbadge{padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);font-weight:800}
+.tstamp{margin-left:auto;opacity:.7;font-variant-numeric:tabular-nums}
+.tb{padding:10px 11px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);line-height:1.35;font-size:12.5px}
+.t.system .tb{border-color:rgba(0,212,255,.18);background:rgba(0,212,255,.06)}
+@media (max-width:1100px){body{overflow:auto}.app{height:auto;min-height:100vh;grid-template-columns:240px 1fr;grid-template-rows:auto auto}.right{grid-column:2}.main{min-height:70vh}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel side">
+    <div class="logoWrap">
+      <div id="logoFallback" class="logoFallback"><span img src="C:OneInBox\Images\oneInBox.png"></span><span>OneInbox</span></div>
+      <img id="logoImg" class="logo" alt="OneInBox"/>
+    </div>
+
+    <nav class="nav">
+      <button class="navBtn" data-filter="all"><span class="pdot"></span><span>Inbox / Todos</span></button>
+      <button class="navBtn" data-filter="whatsapp"><span class="pdot wa"></span><span>WhatsApp</span></button>
+      <button class="navBtn" data-filter="instagram"><span class="pdot ig"></span><span>Instagram</span></button>
+      <button class="navBtn" data-filter="facebook"><span class="pdot fb"></span><span>Facebook</span></button>
+    </nav>
+
+    <div class="mix">
+      <div class="mixT">Plataformas</div>
+      <div class="hint" id="mixHint">Seleccioná una app para ver el mix.</div>
+      <div class="row"><span class="pdot wa"></span><span class="name">WhatsApp</span><div class="bar"><div class="fill wa" id="fillWA"></div></div><span class="pct" id="pctWA">--%</span></div>
+      <div class="row"><span class="pdot ig"></span><span class="name">Instagram</span><div class="bar"><div class="fill ig" id="fillIG"></div></div><span class="pct" id="pctIG">--%</span></div>
+      <div class="row"><span class="pdot fb"></span><span class="name">Facebook</span><div class="bar"><div class="fill fb" id="fillFB"></div></div><span class="pct" id="pctFB">--%</span></div>
+    </div>
+  </aside>
+
+  <main class="panel main">
+    <!-- Header eliminado (innecesario) -->
+    <section class="actions">
+      <button class="btn primary" id="btnGenerate" disabled>Actualizar</button>
+      <button class="btn" id="btnClear" disabled>Limpiar</button>
+      <button class="btn" id="btnAuto" disabled>Pausar flujo</button>
+    </section>
+
+    <section class="msgs">
+      <div class="feedWrap">
+        <div class="placeholder" id="placeholder">
+          <div class="box">
+            <div style="font-weight:900;margin-bottom:6px">Selecciona una app para ver mensajes</div>
+            <div style="font-size:12px;color:var(--mut);line-height:1.35">Mensajes entrantes y respuestas automáticas aparecerán aquí con el filtro activo.</div>
+          </div>
+        </div>
+        <div class="feed" id="feed" style="display:none;"></div>
+        <div class="empty" id="empty" style="display:none;">No hay mensajes para esta vista.</div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="panel right">
+    <div class="sim">
+      <div><h3>Simulador</h3><p>Inyecta un mensaje entrante y observa la respuesta automática en el inbox.</p></div>
+
+      <div class="form">
+        <div><label for="inName">Nombre del usuario</label><input id="inName" placeholder="Ej: Fede" autocomplete="off"/></div>
+        <div><label for="inPlatform">Plataforma</label>
+          <select id="inPlatform"><option value="whatsapp">WhatsApp</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option></select>
+        </div>
+        <div><label for="inText">Mensaje</label><textarea id="inText" placeholder="Escribe un mensaje…"></textarea></div>
+        <button class="btn primary" id="btnSend">Simular mensaje</button>
+      </div>
+
+      <div class="thread">
+        <div class="thTop"><div class="thTitle">Conversación del simulador</div><div class="thMeta" id="threadMeta">—</div></div>
+        <div class="thList" id="threadList"><div class="thEmpty" id="threadEmpty">Escribe un nombre para ver la conversación</div></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const CFG={AUTO_MS:9000,DELAY_MS:900,STICKY:140,FORCE_P:0.75};
+const $=q=>document.querySelector(q);
+
+const feed=$("#feed"),ph=$("#placeholder"),empty=$("#empty"),
+btnG=$("#btnGenerate"),btnC=$("#btnClear"),btnA=$("#btnAuto"),btnS=$("#btnSend"),
+inName=$("#inName"),inP=$("#inPlatform"),inText=$("#inText"),
+mixHint=$("#mixHint"),pctWA=$("#pctWA"),pctIG=$("#pctIG"),pctFB=$("#pctFB"),
+fillWA=$("#fillWA"),fillIG=$("#fillIG"),fillFB=$("#fillFB"),
+tMeta=$("#threadMeta"),tList=$("#threadList"),tEmpty=$("#threadEmpty"),
+nav=[...document.querySelectorAll(".navBtn")];
+
+const PL={whatsapp:{label:"WhatsApp",cls:"wa"},instagram:{label:"Instagram",cls:"ig"},facebook:{label:"Facebook",cls:"fb"}};
+const S={sel:null,msg:[],autoOn:true,timer:null,busy:false};
+
+const esc=s=>String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+const fmt=ms=>new Intl.DateTimeFormat("es",{hour:"2-digit",minute:"2-digit"}).format(new Date(ms));
+const near=el=>(el.scrollHeight-el.scrollTop-el.clientHeight)<CFG.STICKY;
+const scrollB=el=>el.scrollTo({top:el.scrollHeight,behavior:"smooth"});
+const normKey=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const makeTid=(p,u)=>`${p}:${normKey(u)}`;
+
+function normMsg(m){
+  const p=String(m.platform||"whatsapp").toLowerCase();
+  const role=String(m.role||"user").toLowerCase();
+  const ts=Date.parse(m.timestamp||"")||Date.now();
+  return {id:String(m.id||("m-"+Math.random())), seq:Number.isFinite(m.seq)?m.seq:NaN, thread_id:String(m.thread_id||""),
+    platform:(["whatsapp","instagram","facebook"].includes(p)?p:"whatsapp"), role:(role==="system"?"system":"user"),
+    user:String(m.user||"Usuario"), text:String(m.text||""), timestamp:ts, typing:!!m.typing, client_only:!!m.client_only};
+}
+const sortMsgs=list=>list.slice().sort((a,b)=>{const as=Number.isFinite(a.seq)?a.seq:null,bs=Number.isFinite(b.seq)?b.seq:null;return (as!==null&&bs!==null)?(as-bs):(a.timestamp-b.timestamp)});
+const dedupPush=m=>{if(!S.msg.some(x=>x.id===m.id))S.msg.push(m)};
+const rmTyping=tid=>{S.msg=S.msg.filter(m=>!(m.client_only&&m.typing&&m.thread_id===tid))};
+
+async function get(url){ const r=await fetch(url,{cache:"no-store"}); if(!r.ok) throw new Error(r.status); return r.json(); }
+async function post(url,body){ const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})}); if(!r.ok) throw new Error(r.status); return r.json(); }
+
+async function loadAll(){
+  const data=await get("/api/messages");
+  S.msg=(data.messages||[]).map(normMsg);
+}
+
+function visible(){
+  if(!S.sel) return [];
+  const real=sortMsgs(S.msg.filter(m=>!m.client_only));
+  return S.sel==="all"?real:real.filter(m=>m.platform===S.sel);
+}
+
+function renderMix(list){
+  if(!S.sel){
+    mixHint.textContent="Seleccioná una app para ver el mix.";
+    pctWA.textContent=pctIG.textContent=pctFB.textContent="--%";
+    fillWA.style.width=fillIG.style.width=fillFB.style.width="0%";
+    return;
+  }
+  mixHint.textContent=(S.sel==="all")? "Vista: Inbox / Todos" : `Vista: ${PL[S.sel].label}`;
+  const total=Math.max(list.length,1);
+  const nWA=list.filter(m=>m.platform==="whatsapp").length;
+  const nIG=list.filter(m=>m.platform==="instagram").length;
+  const nFB=list.filter(m=>m.platform==="facebook").length;
+  const pWA=Math.round(nWA/total*100), pIG=Math.round(nIG/total*100), pFB=Math.max(0,100-pWA-pIG);
+  pctWA.textContent=pWA+"%"; pctIG.textContent=pIG+"%"; pctFB.textContent=pFB+"%";
+  fillWA.style.width=pWA+"%"; fillIG.style.width=pIG+"%"; fillFB.style.width=pFB+"%";
+}
+
+function chip(p){return `<span class="chip ${PL[p].cls}"><i></i>${PL[p].label}</span>`;}
+
+function renderThread(){
+  const name=(inName.value||"").trim(), p=inP.value;
+  if(!name){tMeta.textContent="—";tEmpty.style.display="block";tEmpty.textContent="Escribe un nombre para ver la conversación";
+    [...tList.children].forEach(ch=>{if(ch!==tEmpty)ch.remove()}); return;}
+  const tid=makeTid(p,name);
+  tMeta.textContent=`${name} · ${PL[p].label}`;
+  const thread=sortMsgs(S.msg.filter(m=>m.thread_id===tid));
+  [...tList.children].forEach(ch=>{if(ch!==tEmpty)ch.remove()});
+  if(!thread.length){tEmpty.style.display="block";tEmpty.textContent="Aún no hay conversación para este usuario"; return;}
+  tEmpty.style.display="none";
+  for(const m of thread){
+    const el=document.createElement("div"); el.className=`t ${m.role==="system"?"system":"user"}`;
+    const txt=m.typing?`<span class="dots">...</span>`:esc(m.text);
+    el.innerHTML=`<div class="tmeta"><span class="tbadge">${esc(m.role==="system"?"Atención":m.user)}</span><span class="tstamp">${fmt(m.timestamp)}</span></div>
+                  <div class="tb ${m.typing?"typing":""}">${txt}</div>`;
+    tList.appendChild(el);
+  }
+  requestAnimationFrame(()=>{tList.scrollTop=tList.scrollHeight});
+}
+
+function render(){
+  renderThread();
+  nav.forEach(b=>b.classList.toggle("active",b.dataset.filter===S.sel));
+  if(!S.sel){
+    ph.style.display="flex"; feed.style.display="none"; empty.style.display="none";
+    btnG.disabled=btnC.disabled=btnA.disabled=true; renderMix([]); return;
+  }
+  ph.style.display="none"; feed.style.display="flex"; btnA.disabled=false;
+  const list=visible(); renderMix(list);
+  const stick=near(feed), prevTop=feed.scrollTop;
+  feed.innerHTML=""; empty.style.display=list.length? "none":"block";
+  for(const m of list){
+    const el=document.createElement("div"); el.className=`m ${m.role==="system"?"out":"in"}`;
+    const bubble=m.typing?`<span class="dots">...</span>`:esc(m.text);
+    el.innerHTML=`<div class="meta"><span class="badge">${esc(m.user)}</span>${chip(m.platform)}<span class="time">${fmt(m.timestamp)}</span></div>
+                  <div class="bubble ${m.typing?"typing":""}">${bubble}</div>`;
+    feed.appendChild(el);
+  }
+  btnA.textContent=S.autoOn? "Pausar flujo" : "Reanudar flujo";
+  requestAnimationFrame(()=>{ if(stick) scrollB(feed); else feed.scrollTop=prevTop; });
+}
+
+function addTyping(tid, platform){
+  rmTyping(tid);
+  S.msg.push(normMsg({id:"typing-"+tid+"-"+Math.random(), seq:NaN, thread_id:tid, platform, role:"system",
+    user:"Atención", text:"...", timestamp:new Date().toISOString(), typing:true, client_only:true}));
+}
+
+async function generatePaced(){
+  if(S.busy||!S.sel||document.visibilityState!=="visible") return;
+  S.busy=true;
+  try{
+    const url = (S.sel!=="all" && Math.random()<CFG.FORCE_P) ? `/api/generate?platform=${encodeURIComponent(S.sel)}` : "/api/generate";
+    const data=await get(url);
+    const gen=(data.generated||[]).map(normMsg);
+    if(gen.length<2) return;
+
+    const inbound=gen[0], reply=gen[1];
+    dedupPush(inbound);
+    addTyping(inbound.thread_id, inbound.platform);
+    render();
+
+    setTimeout(()=>{ rmTyping(inbound.thread_id); dedupPush(reply); render(); }, CFG.DELAY_MS);
+  } finally { S.busy=false; }
+}
+
+async function send(){
+  if(S.busy) return;
+  const name=(inName.value||"").trim()||"Usuario", p=inP.value, text=(inText.value||"").trim();
+  if(!text) return;
+  if(!S.sel) await select("all");
+
+  S.busy=true;
+  try{
+    const data=await post("/api/send",{platform:p,app:p,channel:p,user_name:name,user:name,sender:name,message:text,text,content:text});
+    const msgs=(data.messages||[]).map(normMsg);
+    if(msgs.length>=2){
+      const inbound=msgs[0], reply=msgs[1];
+      dedupPush(inbound);
+      addTyping(inbound.thread_id || makeTid(p,name), p);
+      render();
+      setTimeout(()=>{ rmTyping(inbound.thread_id || makeTid(p,name)); dedupPush(reply); render(); }, Math.min(650, CFG.DELAY_MS));
+    }
+    inText.value="";
+  } finally { S.busy=false; }
+}
+
+async function clearAll(){
+  await post("/api/clear",{});
+  S.msg=[]; render();
+}
+
+function startAuto(){
+  if(S.timer) return;
+  S.timer=setInterval(()=>{ if(S.autoOn) generatePaced(); }, CFG.AUTO_MS);
+}
+
+function toggleAuto(){
+  S.autoOn=!S.autoOn;
+  render();
+}
+
+async function select(filter){
+  S.sel=filter;
+  btnG.disabled=btnC.disabled=btnA.disabled=false;
+  await loadAll();
+  render();
+  startAuto();
+}
+
+function initLogo(){
+  const img=$("#logoImg"), fb=$("#logoFallback");
+  fb.style.display="flex"; img.style.display="none";
+  img.addEventListener("load",()=>{fb.style.display="none";img.style.display="block"});
+  img.addEventListener("error",()=>{img.style.display="none";fb.style.display="flex"});
+  img.src="/static/oneInBox.png";
+}
+
+nav.forEach(b=>b.addEventListener("click",()=>select(b.dataset.filter)));
+btnG.addEventListener("click",generatePaced);
+btnC.addEventListener("click",clearAll);
+btnS.addEventListener("click",send);
+btnA.addEventListener("click",toggleAuto);
+inName.addEventListener("input",renderThread);
+inP.addEventListener("change",renderThread);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") render(); });
+
+initLogo();
+renderMix([]);
+renderThread();
+</script>
+</body>
+</html>
